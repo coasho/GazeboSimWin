@@ -132,33 +132,29 @@ Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
 当前脚本即使只执行 `fetch` 也会初始化所选工具链，因此仍需要有效的本机配置。构建失败会自动重试，最多三次；编译器反复崩溃时应保留首个错误并检查工具链和机器环境，不能把重试成功当作环境稳定性的证明。
 
-## 运行时配置
+## Gazebo 运行配置
 
-`toolchain.config.ps1` 不会被运行程序读取。更改模型或物理参数，应修改运行时 SDF；本项目没有统一的飞机参数 `config.toml`。
+世界、模型、物理参数、传感器和插件使用 SDF 配置；`toolchain.config.ps1` 不会被运行程序读取，也不是飞机参数文件。
 
-| 配置来源 | 用途 |
-|---|---|
-| 世界 / 模型 `.sdf` 文件 | 世界物理配置、模型质量和惯量、关节、传感器及系统插件参数。 |
-| 启动参数 | 指定世界文件、启动运行、物理引擎、迭代次数、记录与回放等，完整列表见 `--help`。 |
-| `GZ_SIM_RESOURCE_PATH` | 自定义世界和模型资源搜索目录，Windows 下多个目录以分号分隔。 |
-| `GZ_SIM_SYSTEM_PLUGIN_PATH` | 自定义系统插件搜索目录；插件应与运行包使用相同工具链及兼容依赖构建。 |
-| `GZ_SIM_SERVER_CONFIG_PATH` | 指定默认系统插件配置文件，供 Gazebo 的默认插件加载逻辑使用。 |
+运行配置的完整说明见 [Gazebo 运行配置说明](../../docs/gazebo-configuration.md)，带中文注释的完整示例见 [examples/headless.sdf](../../examples/headless.sdf)。内容包括：
 
-程序支持按文件路径、资源搜索目录、已安装世界和 Fuel 查找世界；不支持 ERB 模板。自定义 world 文件需自行准备。进入运行包的 `bin` 目录后，例如：
+- 步长、实时因子、DART / Bullet-featherstone 的选择与覆盖优先级。
+- 质量、重心、惯量、碰撞、坐标系及演示参数的来源。
+- 非渲染传感器所需系统插件、采样率、话题和噪声配置。
+- 多旋翼电机参数、实机标定要求以及 PX4/HITL 对接边界。
+- 模型包 `model.config`、资源/插件搜索路径和 `server.config` 兜底加载规则。
+
+构建完成后，在仓库根目录运行（MSVC 用户将 `gnu` 改为 `msvc`）：
 
 ```powershell
-./gz-sim-headless.exe my_world.sdf -r --stats
-./gz-sim-headless.exe my_world.sdf -r --physics-engine gz-physics-bullet-featherstone-plugin
-./gz-sim-headless.exe --help
+./dist/gnu/gz-sim-harmonic-8.15.0/bin/gz-sim-headless.exe ./examples/headless.sdf -r --stats
 ```
 
-`-r` 表示启动后立即运行。未指定世界且未指定回放路径时，程序会运行自带的 `headless_default.sdf`，展示带 IMU 的箱体下落，并打印仿真时间和实时因子。
+修改 SDF 后重新启动即可，无需重新编译。默认系统配置不会自动补齐已有世界级系统的 SDF：需要 Physics 和 Imu 时，应在 SDF 中显式加载两者，或在没有世界级系统时由默认配置一次加载。
 
-默认系统配置未通过环境变量指定时，Gazebo 会使用用户目录下 `.gz/sim/8/server.config`；该文件不存在时从安装目录复制。需要避免不同项目共用默认配置时，可显式指定 `GZ_SIM_SERVER_CONFIG_PATH`。SDF 中显式声明的插件仍按世界配置加载。
+未指定世界且未指定回放路径时，程序运行随包安装的 `headless_default.sdf`；这不是仓库中单独提供的 `examples/headless.sdf`。自定义世界可通过文件路径、资源搜索目录、已安装世界和 Fuel 查找，不支持 ERB。
 
-插件与安装资源路径通过 DLL 所在目录计算（`GZ_ENABLE_RELOCATABLE_INSTALL=ON`）。`gz-transport-topic.exe`、`gz-transport-service.exe` 分别提供话题与服务命令行功能。
-
-SDF 通常使用 `gz-sim-imu-system`、`gz-physics-dartsim-plugin` 等名称。如果已有世界使用 `gz-sim8-...` 等带版本号名称，打包时加 `-KeepVersionedPlugins`。
+内置插件与安装资源通过 DLL 所在目录计算路径（`GZ_ENABLE_RELOCATABLE_INSTALL=ON`）。`gz-transport-topic.exe`、`gz-transport-service.exe` 分别提供话题与服务命令行功能。
 
 ## 裁剪与保留内容
 
