@@ -1,0 +1,46 @@
+diff --git a/cmake/FindGzBullet.cmake b/cmake/FindGzBullet.cmake
+index 798d239..d4bf5c1 100644
+--- a/cmake/FindGzBullet.cmake
++++ b/cmake/FindGzBullet.cmake
+@@ -38,6 +38,28 @@ set(GzBullet_FOUND false)
+ if(BULLET_FOUND)
+   set(GzBullet_FOUND true)
+ 
++  # FindBullet returns "optimized <lib> debug <lib>" lists when both
++  # configurations are installed (e.g. vcpkg). Those keywords are not allowed
++  # in INTERFACE_LINK_LIBRARIES, so keep the libraries of the current build type.
++  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
++    set(_gz_bullet_skip "optimized")
++  else()
++    set(_gz_bullet_skip "debug")
++  endif()
++  set(_gz_bullet_libs)
++  set(_gz_bullet_keyword)
++  foreach(_gz_bullet_item ${BULLET_LIBRARIES})
++    if(_gz_bullet_item MATCHES "^(optimized|debug|general)$")
++      set(_gz_bullet_keyword ${_gz_bullet_item})
++    else()
++      if(NOT _gz_bullet_keyword STREQUAL _gz_bullet_skip)
++        list(APPEND _gz_bullet_libs "${_gz_bullet_item}")
++      endif()
++      set(_gz_bullet_keyword)
++    endif()
++  endforeach()
++  set(BULLET_LIBRARIES ${_gz_bullet_libs})
++
+   gz_import_target(GzBullet
+     TARGET_NAME GzBullet::GzBullet
+     LIB_VAR BULLET_LIBRARIES
+diff --git a/cmake/FindZeroMQ.cmake b/cmake/FindZeroMQ.cmake
+index a03e58b..3f78edb 100644
+--- a/cmake/FindZeroMQ.cmake
++++ b/cmake/FindZeroMQ.cmake
+@@ -74,7 +74,7 @@ if (ZeroMQ_FOUND)
+ 
+ endif()
+ 
+-if (UNIX)
++if (UNIX OR MINGW)
+ 
+   if(NOT ZeroMQ_FIND_QUIETLY)
+     message(STATUS "Config-file not installed for ZeroMQ -- checking for pkg-config")

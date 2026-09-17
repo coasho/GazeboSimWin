@@ -1,0 +1,117 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index cf2fa72..59d47e5 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -23,6 +23,11 @@ gz_configure_project(VERSION_SUFFIX)
+ #============================================================================
+ set (DRI_TESTS TRUE CACHE BOOL "True to enable DRI tests")
+ 
++#--------------------------------------
++# Option: Build only the sensors that do not need gz-rendering (headless build).
++option(GZ_SENSORS_WITHOUT_RENDERING
++  "Skip gz-rendering and every rendering based sensor component" OFF)
++
+ option(ENABLE_PROFILER "Enable Gazebo Profiler" FALSE)
+ 
+ if(ENABLE_PROFILER)
+@@ -67,17 +72,19 @@ if ((NOT ${CMAKE_VERSION} VERSION_LESS 3.11) AND (NOT OpenGL_GL_PREFERENCE))
+   set(OpenGL_GL_PREFERENCE "GLVND")
+ endif()
+ 
+-gz_find_package(gz-rendering8 REQUIRED OPTIONAL_COMPONENTS ogre ogre2)
+-set(GZ_RENDERING_VER ${gz-rendering8_VERSION_MAJOR})
++if(NOT GZ_SENSORS_WITHOUT_RENDERING)
++  gz_find_package(gz-rendering8 REQUIRED OPTIONAL_COMPONENTS ogre ogre2)
++  set(GZ_RENDERING_VER ${gz-rendering8_VERSION_MAJOR})
+ 
+-if (TARGET gz-rendering${GZ_RENDERING_VER}::ogre)
+-  set(HAVE_OGRE TRUE)
+-  add_definitions(-DWITH_OGRE)
+-endif()
++  if (TARGET gz-rendering${GZ_RENDERING_VER}::ogre)
++    set(HAVE_OGRE TRUE)
++    add_definitions(-DWITH_OGRE)
++  endif()
+ 
+-if (TARGET gz-rendering${GZ_RENDERING_VER}::ogre2)
+-  set(HAVE_OGRE2 TRUE)
+-  add_definitions(-DWITH_OGRE2)
++  if (TARGET gz-rendering${GZ_RENDERING_VER}::ogre2)
++    set(HAVE_OGRE2 TRUE)
++    add_definitions(-DWITH_OGRE2)
++  endif()
+ endif()
+ 
+ #--------------------------------------
+diff --git a/include/gz/sensors/CMakeLists.txt b/include/gz/sensors/CMakeLists.txt
+index bf4411e..7d04437 100644
+--- a/include/gz/sensors/CMakeLists.txt
++++ b/include/gz/sensors/CMakeLists.txt
+@@ -1 +1,21 @@
+-gz_install_all_headers()
++if(GZ_SENSORS_WITHOUT_RENDERING)
++  gz_install_all_headers(EXCLUDE_FILES
++    BoundingBoxCameraSensor.hh
++    CameraSensor.hh
++    DepthCameraSensor.hh
++    DopplerVelocityLog.hh
++    GpuLidarSensor.hh
++    ImageBrownDistortionModel.hh
++    ImageDistortion.hh
++    ImageGaussianNoiseModel.hh
++    ImageNoise.hh
++    Lidar.hh
++    RenderingEvents.hh
++    RenderingSensor.hh
++    RgbdCameraSensor.hh
++    SegmentationCameraSensor.hh
++    ThermalCameraSensor.hh
++    WideAngleCameraSensor.hh)
++else()
++  gz_install_all_headers()
++endif()
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 92a5617..9b64c4d 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -52,6 +52,7 @@ target_link_libraries(${PROJECT_LIBRARY_TARGET_NAME}
+ )
+ target_compile_definitions(${PROJECT_LIBRARY_TARGET_NAME} PUBLIC DepthPoints_EXPORTS)
+ 
++if(NOT GZ_SENSORS_WITHOUT_RENDERING)
+ gz_add_component(rendering SOURCES ${rendering_sources} GET_TARGET_NAME rendering_target)
+ target_link_libraries(${rendering_target}
+   PUBLIC
+@@ -133,6 +134,7 @@ target_link_libraries(${gpu_lidar_target}
+     gz-transport${GZ_TRANSPORT_VER}::gz-transport${GZ_TRANSPORT_VER}
+     ${lidar_target}
+ )
++endif()
+ 
+ set(logical_camera_sources LogicalCameraSensor.cc)
+ gz_add_component(logical_camera SOURCES ${logical_camera_sources} GET_TARGET_NAME logical_camera_target)
+@@ -164,6 +166,7 @@ gz_add_component(force_torque SOURCES ${force_torque_sources} GET_TARGET_NAME fo
+ set(navsat_sources NavSatSensor.cc)
+ gz_add_component(navsat SOURCES ${navsat_sources} GET_TARGET_NAME navsat_target)
+ 
++if(NOT GZ_SENSORS_WITHOUT_RENDERING)
+ set(rgbd_camera_sources RgbdCameraSensor.cc)
+ gz_add_component(rgbd_camera
+   SOURCES ${rgbd_camera_sources}
+@@ -218,11 +221,14 @@ target_link_libraries(${wide_angle_camera_target}
+     gz-msgs${GZ_MSGS_VER}::gz-msgs${GZ_MSGS_VER}
+     gz-transport${GZ_TRANSPORT_VER}::gz-transport${GZ_TRANSPORT_VER}
+ )
++endif()
+ 
+ # Build the unit tests.
+ gz_build_tests(TYPE UNIT SOURCES ${gtest_sources} LIB_DEPS ${rendering_target})
+ 
+ # Build the unit tests that depend on components.
+-gz_build_tests(TYPE UNIT SOURCES Lidar_TEST.cc LIB_DEPS ${lidar_target})
+-gz_build_tests(TYPE UNIT SOURCES Camera_TEST.cc LIB_DEPS ${camera_target})
++if(NOT GZ_SENSORS_WITHOUT_RENDERING)
++  gz_build_tests(TYPE UNIT SOURCES Lidar_TEST.cc LIB_DEPS ${lidar_target})
++  gz_build_tests(TYPE UNIT SOURCES Camera_TEST.cc LIB_DEPS ${camera_target})
++endif()
+ gz_build_tests(TYPE UNIT SOURCES ImuSensor_TEST.cc LIB_DEPS ${imu_target})

@@ -1,0 +1,17 @@
+# Upstream checkouts and generated build/runtime files.
+/src/
+/build/
+/install/
+/dist/
+/_verify/
+
+# Machine-specific paths stay local; commit only the example configuration.
+/patch/*/toolchain.config.ps1
+*.log
+*.tmp
+.vs/
+.vscode/
+.idea/
+.env
+.env.*
+!.env.example

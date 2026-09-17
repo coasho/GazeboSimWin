@@ -1,0 +1,35 @@
+{
+  "name": "gz-harmonic-headless",
+  "version-string": "8.15.0",
+  "description": "Third-party dependencies of the headless Gazebo Harmonic build (MSVC toolchain).",
+  "builtin-baseline": "386d7c478221b7ee0c97bfe6ea61dcf65121d564",
+  "dependencies": [
+    "protobuf",
+    "zeromq",
+    "cppzmq",
+    "tinyxml2",
+    "eigen3",
+    "dlfcn-win32",
+    "libzip",
+    "jsoncpp",
+    "libyaml",
+    "curl",
+    "sqlite3",
+    "freeimage",
+    "gts",
+    "assimp",
+    "bullet3",
+    "ode",
+    "pkgconf",
+    {
+      "name": "dartsim",
+      "default-features": false,
+      "features": [
+        "collision-bullet",
+        "collision-ode",
+        "utils",
+        "utils-urdf"
+      ]
+    }
+  ]
+}

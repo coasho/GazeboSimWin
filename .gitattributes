@@ -1,0 +1,6 @@
+* text=auto
+*.md text eol=lf
+*.ps1 text eol=crlf
+*.cmd text eol=crlf
+# Preserve embedded upstream CRLF lines exactly for git apply.
+*.patch -text

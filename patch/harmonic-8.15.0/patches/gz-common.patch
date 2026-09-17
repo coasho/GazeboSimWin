@@ -1,0 +1,258 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 0aad90a..f5e1006 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -42,6 +42,11 @@ elseif(WIN32)
+ endif()
+ 
+ 
++#--------------------------------------
++# Option: Build the geospatial component without GDAL (headless Windows build).
++# DEM files cannot be loaded then, image heightmaps keep working.
++option(GZ_COMMON_WITHOUT_GDAL "Build geospatial without GDAL (no DEM support)" OFF)
++
+ #============================================================================
+ # Search for project-specific dependencies
+ #============================================================================
+@@ -73,8 +78,8 @@ gz_find_package(
+   DL REQUIRED PRIVATE PRETTY libdl PURPOSE "Required for plugins")
+ 
+ #--------------------------------------
+-# Find dependencies that we ignore for Visual Studio
+-if(NOT MSVC)
++# Find dependencies that we ignore on Windows (Visual Studio and MinGW)
++if(NOT WIN32)
+ 
+   #------------------------------------
+   # Find uuid
+@@ -97,11 +102,13 @@ gz_find_package(
+ 
+ #------------------------------------
+ # Find GDAL
+-gz_find_package(GDAL VERSION 3.0
+-  PKGCONFIG gdal
+-  PKGCONFIG_VER_COMPARISON >=
+-  PRIVATE_FOR geospatial
+-  REQUIRED_BY geospatial)
++if(NOT GZ_COMMON_WITHOUT_GDAL)
++  gz_find_package(GDAL VERSION 3.0
++    PKGCONFIG gdal
++    PKGCONFIG_VER_COMPARISON >=
++    PRIVATE_FOR geospatial
++    REQUIRED_BY geospatial)
++endif()
+ 
+ #------------------------------------
+ # Find libswscale
+diff --git a/geospatial/src/CMakeLists.txt b/geospatial/src/CMakeLists.txt
+index bf528be..22ca947 100644
+--- a/geospatial/src/CMakeLists.txt
++++ b/geospatial/src/CMakeLists.txt
+@@ -1,5 +1,10 @@
+ if (TARGET ${PROJECT_LIBRARY_TARGET_NAME}-graphics)
+   gz_get_libsources_and_unittests(sources gtest_sources)
++  if(GZ_COMMON_WITHOUT_GDAL)
++    list(REMOVE_ITEM sources Dem.cc)
++    list(REMOVE_ITEM gtest_sources Dem_TEST.cc)
++    list(APPEND sources DemNoGdal.cc)
++  endif()
+   gz_add_component(geospatial
+     SOURCES ${sources}
+     DEPENDS_ON_COMPONENTS graphics
+diff --git a/geospatial/src/DemNoGdal.cc b/geospatial/src/DemNoGdal.cc
+new file mode 100644
+index 0000000..4a1f700
+--- /dev/null
++++ b/geospatial/src/DemNoGdal.cc
+@@ -0,0 +1,157 @@
++/*
++ * Copyright (C) 2026 Open Source Robotics Foundation
++ *
++ * Licensed under the Apache License, Version 2.0 (the "License");
++ * you may not use this file except in compliance with the License.
++ * You may obtain a copy of the License at
++ *
++ *     http://www.apache.org/licenses/LICENSE-2.0
++ *
++ * Unless required by applicable law or agreed to in writing, software
++ * distributed under the License is distributed on an "AS IS" BASIS,
++ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
++ * See the License for the specific language governing permissions and
++ * limitations under the License.
++ *
++ */
++
++// Dem implementation used when gz-common is built with
++// GZ_COMMON_WITHOUT_GDAL=ON. Keeps the public API and ABI of Dem, but loading
++// a DEM always fails because there is no raster backend.
++
++#include <limits>
++
++#include "gz/common/Console.hh"
++#include "gz/common/geospatial/Dem.hh"
++
++using namespace gz;
++using namespace common;
++
++class gz::common::Dem::Implementation
++{
++  public: unsigned int maxXSize {std::numeric_limits<unsigned int>::max()};
++  public: unsigned int maxYSize {std::numeric_limits<unsigned int>::max()};
++  public: math::SphericalCoordinates sphericalCoordinates;
++};
++
++//////////////////////////////////////////////////
++Dem::Dem()
++: dataPtr(gz::utils::MakeImpl<Implementation>())
++{
++}
++
++//////////////////////////////////////////////////
++Dem::~Dem() = default;
++
++//////////////////////////////////////////////////
++void Dem::SetSphericalCoordinates(
++    const math::SphericalCoordinates &_worldSphericalCoordinates)
++{
++  this->dataPtr->sphericalCoordinates = _worldSphericalCoordinates;
++}
++
++//////////////////////////////////////////////////
++unsigned int Dem::RasterXSizeLimit()
++{
++  return this->dataPtr->maxXSize;
++}
++
++//////////////////////////////////////////////////
++void Dem::SetRasterXSizeLimit(const unsigned int &_xLimit)
++{
++  this->dataPtr->maxXSize = _xLimit;
++}
++
++//////////////////////////////////////////////////
++unsigned int Dem::RasterYSizeLimit()
++{
++  return this->dataPtr->maxYSize;
++}
++
++//////////////////////////////////////////////////
++void Dem::SetRasterYSizeLimit(const unsigned int &_yLimit)
++{
++  this->dataPtr->maxYSize = _yLimit;
++}
++
++//////////////////////////////////////////////////
++int Dem::Load(const std::string &_filename)
++{
++  gzerr << "Unable to load DEM file [" << _filename << "]: gz-common was "
++        << "built without GDAL (GZ_COMMON_WITHOUT_GDAL)." << std::endl;
++  return -1;
++}
++
++//////////////////////////////////////////////////
++double Dem::Elevation(double, double)
++{
++  return 0.0;
++}
++
++//////////////////////////////////////////////////
++float Dem::MinElevation() const
++{
++  return 0.0f;
++}
++
++//////////////////////////////////////////////////
++float Dem::MaxElevation() const
++{
++  return 0.0f;
++}
++
++//////////////////////////////////////////////////
++bool Dem::GeoReference(double, double, gz::math::Angle &, gz::math::Angle &)
++    const
++{
++  return false;
++}
++
++//////////////////////////////////////////////////
++bool Dem::GeoReferenceOrigin(gz::math::Angle &, gz::math::Angle &) const
++{
++  return false;
++}
++
++//////////////////////////////////////////////////
++unsigned int Dem::Height() const
++{
++  return 0u;
++}
++
++//////////////////////////////////////////////////
++unsigned int Dem::Width() const
++{
++  return 0u;
++}
++
++//////////////////////////////////////////////////
++double Dem::WorldWidth() const
++{
++  return 0.0;
++}
++
++//////////////////////////////////////////////////
++double Dem::WorldHeight() const
++{
++  return 0.0;
++}
++
++//////////////////////////////////////////////////
++void Dem::FillHeightMap(int, unsigned int, const gz::math::Vector3d &,
++    const gz::math::Vector3d &, bool, std::vector<float> &_heights) const
++{
++  _heights.clear();
++}
++
++//////////////////////////////////////////////////
++int Dem::LoadData()
++{
++  return -1;
++}
++
++//////////////////////////////////////////////////
++std::string Dem::Filename() const
++{
++  return std::string();
++}
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index bcb1ff4..9e032f6 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -30,7 +30,7 @@ if(NOT WIN32)
+     pthread)
+ else()
+   target_link_libraries(${PROJECT_LIBRARY_TARGET_NAME}
+-    PRIVATE shlwapi)
++    PRIVATE shlwapi rpcrt4)
+ endif()
+ 
+ # don't build MovingWindowFilter_TEST if we don't have gz-math
+diff --git a/src/SystemPaths.cc b/src/SystemPaths.cc
+index 4998151..a1f4e67 100644
+--- a/src/SystemPaths.cc
++++ b/src/SystemPaths.cc
+@@ -329,6 +329,8 @@ std::vector<std::string> SystemPaths::Implementation::GenerateLibraryPaths(
+     basenames.push_back("lib" + name + ".so");
+     basenames.push_back(name + ".so");
+     basenames.push_back(name + ".dll");
++    // MinGW builds name DLLs lib<name>.dll
++    basenames.push_back("lib" + name + ".dll");
+     basenames.push_back("Release/" + name + ".dll");
+     basenames.push_back("Debug/" + name + ".dll");
+     basenames.push_back(name + ".dll");
+@@ -337,6 +339,7 @@ std::vector<std::string> SystemPaths::Implementation::GenerateLibraryPaths(
+     basenames.push_back("lib" + name + ".SO");
+     basenames.push_back(name + ".SO");
+     basenames.push_back(name + ".DLL");
++    basenames.push_back("lib" + name + ".DLL");
+     basenames.push_back("Release/" + name + ".DLL");
+     basenames.push_back("Debug/" + name + ".DLL");
+     basenames.push_back("lib" + name + ".DYLIB");

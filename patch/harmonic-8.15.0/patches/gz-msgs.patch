@@ -1,0 +1,13 @@
+diff --git a/core/src/DynamicFactory.cc b/core/src/DynamicFactory.cc
+index 279fdfd..0e37052 100644
+--- a/core/src/DynamicFactory.cc
++++ b/core/src/DynamicFactory.cc
+@@ -101,7 +101,7 @@ void DynamicFactory::LoadDescriptors(const std::string &_paths)
+       return;
+ 
+     // Parse the .desc file.
+-    std::ifstream ifs(descFile);
++    std::ifstream ifs(descFile, std::ios::binary);
+     if (!ifs.is_open())
+     {
+       std::cerr << "DynamicFactory(): Unable to open [" << descFile << "]"

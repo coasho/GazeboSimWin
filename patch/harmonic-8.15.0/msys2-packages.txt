@@ -1,0 +1,26 @@
+# MSYS2 packages required by the GNU toolchain build.
+# The prefix mingw-w64-<env>-x86_64- is added by build.ps1 (env from toolchain.config.ps1).
+# Not needed on purpose: ffmpeg (gz-common av), gdal (DEM), qt, ogre.
+gcc
+cmake
+ninja
+pkgconf
+python
+protobuf
+abseil-cpp
+zeromq
+cppzmq
+tinyxml2
+eigen3
+dlfcn
+libzip
+jsoncpp
+libyaml
+curl
+sqlite3
+freeimage
+gts
+assimp
+bullet
+ode
+fmt

@@ -1,0 +1,28 @@
+# Pinned sources for the headless Gazebo Harmonic build.
+# <name>  <git url>  <tag>  <group>
+# group: gz  = Gazebo library (built for both toolchains, patched from patches/<name>.patch)
+#        gnu = third-party library built from source for the GNU toolchain only
+#              (the MSVC toolchain gets these from vcpkg, see vcpkg.json)
+#
+# Removed on purpose (visualization only): gz-rendering8, gz-gui8, gz-launch7,
+# and gz-tools2 (Ruby based CLI, replaced by the native gz-sim-headless.exe).
+
+gz-cmake        https://github.com/gazebosim/gz-cmake                     gz-cmake3_3.6.0          gz
+gz-utils        https://github.com/gazebosim/gz-utils                     gz-utils2_2.2.1          gz
+gz-math         https://github.com/gazebosim/gz-math                      gz-math7_7.7.0           gz
+gz-plugin       https://github.com/gazebosim/gz-plugin                    gz-plugin2_2.0.4         gz
+gz-common       https://github.com/gazebosim/gz-common                    gz-common5_5.9.0         gz
+sdformat        https://github.com/gazebosim/sdformat                     sdformat14_14.9.0        gz
+gz-msgs         https://github.com/gazebosim/gz-msgs                      gz-msgs10_10.4.0         gz
+gz-transport    https://github.com/gazebosim/gz-transport                 gz-transport13_13.6.0    gz
+gz-fuel-tools   https://github.com/gazebosim/gz-fuel-tools                gz-fuel-tools9_9.1.1     gz
+gz-physics      https://github.com/gazebosim/gz-physics                   gz-physics7_7.8.0        gz
+gz-sensors      https://github.com/gazebosim/gz-sensors                   gz-sensors8_8.2.2        gz
+gz-sim          https://github.com/gazebosim/gz-sim                       gz-sim8_8.15.0           gz
+
+libccd          https://github.com/danfis/libccd                          v2.1                     gnu
+fcl             https://github.com/flexible-collision-library/fcl         0.7.0                    gnu
+console_bridge  https://github.com/ros/console_bridge                     1.0.2                    gnu
+urdfdom_headers https://github.com/ros/urdfdom_headers                    1.1.2                    gnu
+urdfdom         https://github.com/ros/urdfdom                            4.0.1                    gnu
+dart            https://github.com/dartsim/dart                           v6.15.0                  gnu

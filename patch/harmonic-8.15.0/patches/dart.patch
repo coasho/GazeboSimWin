@@ -1,0 +1,188 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index fc52494..9bc2db3 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -64,7 +64,7 @@ string(REGEX REPLACE "^<version>([0-9]+)\\.([0-9]+)\\.([0-9]+)</version>$" "\\3"
+ set(DART_VERSION "${DART_MAJOR_VERSION}.${DART_MINOR_VERSION}.${DART_PATCH_VERSION}")
+ 
+ set(DART_PKG_DESC "Dynamic Animation and Robotics Toolkit.")
+-set(DART_PKG_EXTERNAL_DEPS "assimp, ccd, eigen3, fcl, octomap")
++set(DART_PKG_EXTERNAL_DEPS "assimp,      eigen3, fcl, octomap")
+ 
+ #===============================================================================
+ # Build options
+diff --git a/cmake/DARTFindEigen3.cmake b/cmake/DARTFindEigen3.cmake
+index f1f002e..d205773 100644
+--- a/cmake/DARTFindEigen3.cmake
++++ b/cmake/DARTFindEigen3.cmake
+@@ -6,4 +6,4 @@
+ #
+ # This file is provided under the "BSD-style" License
+ 
+-find_package(Eigen3 3.4.0 REQUIRED CONFIG)
++find_package(Eigen3 3.4.0...5 REQUIRED CONFIG)
+diff --git a/cmake/Findassimp.cmake b/cmake/Findassimp.cmake
+index b5c1c66..099a3b4 100644
+--- a/cmake/Findassimp.cmake
++++ b/cmake/Findassimp.cmake
+@@ -25,7 +25,7 @@ find_path(ASSIMP_INCLUDE_DIRS assimp/scene.h
+     PATHS "${CMAKE_INSTALL_PREFIX}/include")
+ 
+ # Libraries
+-if(MSVC)
++if(1)
+   find_package(assimp QUIET CONFIG)
+   if(TARGET assimp::assimp)
+     set(ASSIMP_LIBRARIES "assimp::assimp")
+diff --git a/cmake/Findfcl.cmake b/cmake/Findfcl.cmake
+index 7be9d61..d082d4d 100644
+--- a/cmake/Findfcl.cmake
++++ b/cmake/Findfcl.cmake
+@@ -27,7 +27,7 @@ find_path(FCL_INCLUDE_DIRS
+     PATHS "${CMAKE_INSTALL_PREFIX}/include")
+ 
+ # Libraries
+-if(MSVC)
++if(1)
+   find_package(fcl QUIET CONFIG)
+   if(TARGET fcl)
+     set(FCL_LIBRARIES fcl)
+diff --git a/cmake/Findtinyxml2.cmake b/cmake/Findtinyxml2.cmake
+index 0552a8e..c731624 100644
+--- a/cmake/Findtinyxml2.cmake
++++ b/cmake/Findtinyxml2.cmake
+@@ -29,8 +29,8 @@ find_path(TINYXML2_INCLUDE_DIRS
+     PATHS "${CMAKE_INSTALL_PREFIX}/include")
+ 
+ # Libraries
+-if(MSVC)
+-  set(TINYXML2_LIBRARIES "tinyxml2$<$<CONFIG:Debug>:d>")
++if(1)
++  set(TINYXML2_LIBRARIES tinyxml2::tinyxml2)
+ else()
+   find_library(TINYXML2_LIBRARIES
+       NAMES tinyxml2
+diff --git a/dart/common/SharedLibrary.cpp b/dart/common/SharedLibrary.cpp
+index e09750a..23e85bf 100644
+--- a/dart/common/SharedLibrary.cpp
++++ b/dart/common/SharedLibrary.cpp
+@@ -133,7 +133,7 @@ void* SharedLibrary::getSymbol(const std::string& symbolName) const
+     return nullptr;
+   }
+ 
+-  return static_cast<void*>(symbol);
++  return reinterpret_cast<void*>(symbol);
+ }
+ 
+ //==============================================================================
+diff --git a/dart/optimizer/GenericMultiObjectiveProblem.cpp b/dart/optimizer/GenericMultiObjectiveProblem.cpp
+index e58a57a..d625157 100644
+--- a/dart/optimizer/GenericMultiObjectiveProblem.cpp
++++ b/dart/optimizer/GenericMultiObjectiveProblem.cpp
+@@ -37,6 +37,7 @@
+ #include "dart/optimizer/Function.hpp"
+ 
+ #include <algorithm>
++#include <cassert>
+ #include <limits>
+ #include <numeric>
+ 
+diff --git a/dart/optimizer/GradientDescentSolver.cpp b/dart/optimizer/GradientDescentSolver.cpp
+index 6c92a32..d4b858a 100644
+--- a/dart/optimizer/GradientDescentSolver.cpp
++++ b/dart/optimizer/GradientDescentSolver.cpp
+@@ -36,6 +36,7 @@
+ #include "dart/math/Helpers.hpp"
+ #include "dart/optimizer/Problem.hpp"
+ 
++#include <cassert>
+ #include <iostream>
+ 
+ namespace dart {
+diff --git a/dart/optimizer/MultiObjectiveProblem.cpp b/dart/optimizer/MultiObjectiveProblem.cpp
+index 6e86f0e..e55e0bf 100644
+--- a/dart/optimizer/MultiObjectiveProblem.cpp
++++ b/dart/optimizer/MultiObjectiveProblem.cpp
+@@ -37,6 +37,7 @@
+ #include "dart/optimizer/Function.hpp"
+ 
+ #include <algorithm>
++#include <cassert>
+ #include <limits>
+ #include <numeric>
+ 
+diff --git a/dart/optimizer/MultiObjectiveSolver.cpp b/dart/optimizer/MultiObjectiveSolver.cpp
+index 4215f78..c0edbb5 100644
+--- a/dart/optimizer/MultiObjectiveSolver.cpp
++++ b/dart/optimizer/MultiObjectiveSolver.cpp
+@@ -35,6 +35,7 @@
+ #include "dart/common/Console.hpp"
+ #include "dart/optimizer/MultiObjectiveProblem.hpp"
+ 
++#include <cassert>
+ #include <fstream>
+ 
+ namespace dart {
+diff --git a/dart/optimizer/Population.cpp b/dart/optimizer/Population.cpp
+index 0469683..69e4b65 100644
+--- a/dart/optimizer/Population.cpp
++++ b/dart/optimizer/Population.cpp
+@@ -35,6 +35,8 @@
+ #include "dart/common/Console.hpp"
+ #include "dart/math/Random.hpp"
+ 
++#include <cassert>
++
+ namespace dart {
+ namespace optimizer {
+ 
+diff --git a/dart/optimizer/Problem.cpp b/dart/optimizer/Problem.cpp
+index 8bf3317..7dc20a0 100644
+--- a/dart/optimizer/Problem.cpp
++++ b/dart/optimizer/Problem.cpp
+@@ -37,6 +37,7 @@
+ #include "dart/optimizer/Function.hpp"
+ 
+ #include <algorithm>
++#include <cassert>
+ #include <limits>
+ 
+ namespace dart {
+diff --git a/dart/optimizer/ipopt/IpoptSolver.cpp b/dart/optimizer/ipopt/IpoptSolver.cpp
+index 0762e1e..e212601 100644
+--- a/dart/optimizer/ipopt/IpoptSolver.cpp
++++ b/dart/optimizer/ipopt/IpoptSolver.cpp
+@@ -38,6 +38,8 @@
+ #include "dart/optimizer/Function.hpp"
+ #include "dart/optimizer/Problem.hpp"
+ 
++#include <cassert>
++
+ namespace dart {
+ namespace optimizer {
+ 
+diff --git a/dart/optimizer/nlopt/NloptSolver.cpp b/dart/optimizer/nlopt/NloptSolver.cpp
+index 0adb336..b5dcba5 100644
+--- a/dart/optimizer/nlopt/NloptSolver.cpp
++++ b/dart/optimizer/nlopt/NloptSolver.cpp
+@@ -39,6 +39,7 @@
+ 
+ #include <Eigen/Dense>
+ 
++#include <cassert>
+ #include <memory>
+ 
+ namespace dart {
+diff --git a/dart/optimizer/pagmo/PagmoMultiObjectiveProblemAdaptor.cpp b/dart/optimizer/pagmo/PagmoMultiObjectiveProblemAdaptor.cpp
+index aa3f551..626955c 100644
+--- a/dart/optimizer/pagmo/PagmoMultiObjectiveProblemAdaptor.cpp
++++ b/dart/optimizer/pagmo/PagmoMultiObjectiveProblemAdaptor.cpp
+@@ -34,6 +34,8 @@
+ 
+ #include "dart/optimizer/pagmo/PagmoUtils.hpp"
+ 
++#include <cassert>
++
+ namespace dart {
+ namespace optimizer {
+ 

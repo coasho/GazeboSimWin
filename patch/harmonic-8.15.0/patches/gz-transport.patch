@@ -1,0 +1,39 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 43e1cad..636d73d 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -97,7 +97,7 @@ gz_find_package(CPPZMQ REQUIRED PRIVATE
+ 
+ #--------------------------------------
+ # Find uuid
+-if (MSVC)
++if (WIN32)
+   set(skip_pybind11_default_value ON)
+   message (STATUS "UUID: Using Windows RPC UuidCreate function\n")
+ else()
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 36568dd..f3dd0ee 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -21,11 +21,20 @@ target_include_directories(${PROJECT_LIBRARY_TARGET_NAME}
+     $<TARGET_PROPERTY:CPPZMQ::CPPZMQ,INTERFACE_INCLUDE_DIRECTORIES>)
+ 
+ # Windows system library provides UUID
+-if (NOT MSVC)
++if (NOT WIN32)
+   target_link_libraries(${PROJECT_LIBRARY_TARGET_NAME}
+     PUBLIC
+       UUID::UUID
+   )
++else()
++  # MSVC gets these through #pragma comment and the libzmq CMake target,
++  # MinGW (libzmq found with pkg-config) needs them explicitly.
++  target_link_libraries(${PROJECT_LIBRARY_TARGET_NAME}
++    PUBLIC
++      rpcrt4
++      ws2_32
++      iphlpapi
++  )
+ endif()
+ 
+ # Build the unit tests.
